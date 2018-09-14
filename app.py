@@ -6,9 +6,11 @@ __author__ = 'nufrix'
 
 from flask import Flask, g, jsonify, request
 import sqlite3
+import zipfile
 
 HLIDACSTATU_API_TOKEN = '7f7297e6fe4842ffac1820e250a909d0'
-DATABASE = 'data/api_data_2.db'
+DATABASE = 'data/api_data.db'
+DATABASE_ZIP = 'data/api_data.zip'
 
 app = Flask(__name__)
 
@@ -103,4 +105,8 @@ def handle_error(e):
 
 
 if __name__ == '__main__':
+    zip_ref = zipfile.ZipFile(DATABASE_ZIP, 'r')
+    zip_ref.extractall('data/')
+    zip_ref.close()
+
     app.run(debug=True, host='0.0.0.0', port=8080)

@@ -6,7 +6,6 @@ import os
 import sqlite3
 
 DB_NAME = 'api_data.db'
-DB_NAME_2 = 'api_data_2.db'
 
 
 def load_candidates(filename_candidates, filename_parties):
@@ -127,7 +126,7 @@ def load_candidates_2():
                 #
                 # FULLNAME consists of title before, name, surname and title after
                 fullname = ('{} {} {} {}'.format(line[8], line[6], line[7], line[9])).strip()
-                unique_id = '{} {}'.format(fullname, int(year) - int(line[10]))  # fullname, year of birth
+                unique_id = '{} {}'.format(fullname, int(year) - (int(line[10]) if line[10] else 0))  # fullname, year of birth
 
                 # Generate IDs
                 if unique_id not in candidates_ids:
@@ -145,8 +144,8 @@ def load_candidates_2():
 
 
 def process_candidates_2():
-    if os.path.exists(DB_NAME_2):
-        os.remove(DB_NAME_2)
+    if os.path.exists(DB_NAME):
+        os.remove(DB_NAME)
 
     header, data = load_candidates_2()
     if not header or not data:
@@ -155,7 +154,7 @@ def process_candidates_2():
     create_query = 'CREATE TABLE candidate({})'.format(', '.join(header))
     insert_query = 'INSERT INTO candidate VALUES ({})'.format(','.join(['?' for _ in header]))
 
-    connection = sqlite3.connect(DB_NAME_2)
+    connection = sqlite3.connect(DB_NAME)
     cursor = connection.cursor()
 
     cursor.execute(create_query)
