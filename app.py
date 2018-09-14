@@ -38,18 +38,28 @@ def find_candidates():
 
     E.g.:
 
-        /find-candidates?query=Jiří Nová
+        /find-candidates?query=Jiří%20Nová&party=komunistická&sort=desc
     """
     query = request.args.get('query').encode('utf-8')
     if query is None:
         raise ValueError('Missing request argument \"query\"')
 
+    party = request.args.get('party')
+    sort = request.args.get('sort', default='ASC').upper()
+
     with app.app_context():
         cursor = get_db().cursor()
-        cursor.execute('SELECT * FROM candidate WHERE FULLNAME LIKE "%{}%"'.format(query))
+        search_query = 'SELECT * FROM candidate WHERE FULLNAME LIKE "%{}%"'.format(query)
+
+        if party:
+            search_query = '{} AND {}'.format(search_query, 'OSTRANA="{}"'.format(party.encode('utf-8')))
+
+        search_query = '{} ORDER BY POCHLASU {}'.format(search_query, sort)
+
+        cursor.execute(search_query)
         result = cursor.fetchall()
 
-        return jsonify(candidates=[{'id': item[-1], 'fullname': item[-2], 'age': item[10]} for item in result])
+        return jsonify(candidates=[{'id': item[-1], 'fullname': item[-2], 'age': item[10]} for item in result], count=len(result))
 
 @app.route('/candidate/<int:candidate_id>', methods=['GET'])
 def candidate(candidate_id):
@@ -60,7 +70,26 @@ def candidate(candidate_id):
         result = cursor.fetchone()
 
         return jsonify(fullname=result[-2], age=result[10], work=result[11], home=result[12], region=result[0],
-                       party=result[4], council=result[1], vote_region=result[2])
+                       party=result[4], council=result[1], vote_region=result[2], mandate=True if result[19]=="1" else False, votes=result[16],
+                       votes_percent=result[18])
+
+
+@app.route('/parties', methods=['GET'])
+def list_parties():
+    """
+    List all parties.
+
+    E.g.:
+        /parties?query=ksčm
+    """
+    query = request.args.get('query', default='')
+
+    with app.app_context():
+        cursor = get_db().cursor()
+        cursor.execute('SELECT OSTRANA FROM candidate WHERE OSTRANA LIKE "%{}%" GROUP BY OSTRANA'.format(query.encode('utf-8')))
+        result = cursor.fetchall()
+
+        return jsonify(parties=[item[0] for item in result], count=len(result))
 
 
 @app.errorhandler(Exception)
