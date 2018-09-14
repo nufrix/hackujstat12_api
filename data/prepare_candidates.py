@@ -4,69 +4,11 @@
 import csv
 import os
 import sqlite3
+import zipfile
 
 DB_NAME = 'api_data.db'
+DB_NAME_ZIP = 'api_data.zip'
 
-
-def load_candidates(filename_candidates, filename_parties):
-    header = []
-    data = []
-
-    parties = load_parties(filename_parties)
-
-    with open(filename_candidates, 'r') as f:
-        reader = csv.reader(f, delimiter=',', quotechar='\"')
-        header = next(reader)
-        header.append('FULLNAME')
-        header.append('ID')
-        for index, line in enumerate(reader, start=1):
-            # For each candidate, create FULLNAME column for search purposes
-            #
-            # FULLNAME consists of title before, name, surname and title after
-            fullname = ('{} {} {} {}'.format(line[8], line[6], line[7], line[9])).strip()
-            line.append(fullname)
-            line.append(index)
-            line[4] = parties[line[4]]
-            data.append(line)
-
-    return header, data
-
-
-def load_parties(filename):
-    data = {}
-    with open(filename, 'r') as f:
-        reader = csv.reader(f, delimiter=',', quotechar='\"')
-        header = next(reader)
-
-        for line in reader:
-            if line[9]:
-                data[line[5]] = '{} ({})'.format(line[7], line[9])
-            else:
-                data[line[5]] = line[7]
-
-        return data
-
-
-def process_candidates(filename_candidates='kvrk.csv', filename_parties='kvros.csv'):
-    if os.path.exists(DB_NAME):
-        os.remove(DB_NAME)
-
-    header, data = load_candidates(filename_candidates, filename_parties)
-    if not header or not data:
-        raise ValueError('No data: {}, {}'.format(header, data))
-
-    create_query = 'CREATE TABLE candidate({})'.format(', '.join(header))
-    insert_query = 'INSERT INTO candidate VALUES ({})'.format(','.join(['?' for _ in header]))
-
-    connection = sqlite3.connect(DB_NAME)
-    cursor = connection.cursor()
-
-    cursor.execute(create_query)
-    cursor.executemany(insert_query, data)
-    connection.commit()
-
-
-# NEW VERSION OF DATA LOADING
 
 def load_parties_2():
     parties_files = [f for f in os.listdir('.') if f.startswith('kvros')]
@@ -143,7 +85,7 @@ def load_candidates_2():
     return last_header, candidates
 
 
-def process_candidates_2():
+def process_candidates_2(connection=None):
     if os.path.exists(DB_NAME):
         os.remove(DB_NAME)
 
@@ -154,12 +96,18 @@ def process_candidates_2():
     create_query = 'CREATE TABLE candidate({})'.format(', '.join(header))
     insert_query = 'INSERT INTO candidate VALUES ({})'.format(','.join(['?' for _ in header]))
 
-    connection = sqlite3.connect(DB_NAME)
+    if connection is None:
+        connection = sqlite3.connect(DB_NAME)
     cursor = connection.cursor()
 
     cursor.execute(create_query)
     cursor.executemany(insert_query, data)
     connection.commit()
+
+    # Zip the file and remove the old one
+    with zipfile.ZipFile(DB_NAME_ZIP, 'w', zipfile.ZIP_DEFLATED) as myzip:
+        myzip.write(DB_NAME)
+    os.remove(DB_NAME)
 
 
 if __name__ == '__main__':
