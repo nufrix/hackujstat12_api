@@ -8,7 +8,7 @@ from flask import Flask, g, jsonify, request
 import sqlite3
 
 HLIDACSTATU_API_TOKEN = '7f7297e6fe4842ffac1820e250a909d0'
-DATABASE = 'data/api_data.db'
+DATABASE = 'data/api_data_2.db'
 
 app = Flask(__name__)
 
@@ -46,10 +46,11 @@ def find_candidates():
 
     party = request.args.get('party')
     sort = request.args.get('sort', default='ASC').upper()
+    year = request.args.get('year', default=2006, type=int)
 
     with app.app_context():
         cursor = get_db().cursor()
-        search_query = 'SELECT * FROM candidate WHERE FULLNAME LIKE "%{}%"'.format(query)
+        search_query = 'SELECT * FROM candidate WHERE FULLNAME LIKE "%{}%" AND YEAR={}'.format(query, year)
 
         if party:
             search_query = '{} AND {}'.format(search_query, 'OSTRANA="{}"'.format(party.encode('utf-8')))
@@ -59,7 +60,7 @@ def find_candidates():
         cursor.execute(search_query)
         result = cursor.fetchall()
 
-        return jsonify(candidates=[{'id': item[-1], 'fullname': item[-2], 'age': item[10]} for item in result], count=len(result))
+        return jsonify(candidates=[{'id': item[-2], 'fullname': item[-3], 'age': item[10]} for item in result], count=len(result))
 
 @app.route('/candidate/<int:candidate_id>', methods=['GET'])
 def candidate(candidate_id):
@@ -67,11 +68,11 @@ def candidate(candidate_id):
     with app.app_context():
         cursor = get_db().cursor()
         cursor.execute('SELECT * FROM candidate WHERE ID={}'.format(candidate_id))
-        result = cursor.fetchone()
+        result = cursor.fetchall()
 
-        return jsonify(fullname=result[-2], age=result[10], work=result[11], home=result[12], region=result[0],
-                       party=result[4], council=result[1], vote_region=result[2], mandate=True if result[19]=="1" else False, votes=result[16],
-                       votes_percent=result[18])
+        return jsonify([{'fullname': item[-3], 'age': item[10], 'work': item[11], 'home': item[12], 'region': item[0],
+                         'party': item[4], 'council': item[1], 'vote_region': item[2], 'mandate': True if item[19] == "1" else False,
+                         'votes': item[16], 'votes_percent': item[18], 'year': item[-1]} for item in result])
 
 
 @app.route('/parties', methods=['GET'])
@@ -102,4 +103,4 @@ def handle_error(e):
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=80)
+    app.run(debug=True, host='0.0.0.0', port=8080)
