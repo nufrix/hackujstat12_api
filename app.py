@@ -52,7 +52,7 @@ def find_candidates():
         cursor.execute('SELECT * FROM candidate WHERE FULLNAME LIKE "%{}%"'.format(query))
         result = cursor.fetchall()
 
-        return jsonify(candidates=[{'fullname': item[-1], 'age': item[10], 'work': item[11], 'home': item[12]} for item in result])
+        return jsonify(candidates=[{'id': item[-1],'fullname': item[-2], 'age': item[10], 'work': item[11], 'home': item[12]} for item in result])
 
 @app.errorhandler(Exception)
 def handle_error(e):

@@ -15,12 +15,14 @@ def load_file(filename):
         reader = csv.reader(f, delimiter=',', quotechar='\"')
         header = next(reader)
         header.append('FULLNAME')
-        for line in reader:
+        header.append('ID')
+        for index, line in enumerate(reader, start=1):
             # For each candidate, create FULLNAME column for search purposes
             #
             # FULLNAME consists of title before, name, surname and title after
             fullname = ('{} {} {} {}'.format(line[8], line[6], line[7], line[9])).strip()
             line.append(fullname)
+            line.append(index)
             data.append(line)
 
     return header, data
