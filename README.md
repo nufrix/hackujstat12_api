@@ -2,11 +2,11 @@
 ## Instalace
 Vytoříme si virtuální environment:
 
-```[nufrix@nufrix-thinkpad-t470p ~/Workspace/hackujstat12_api] ⑂master $ virtualenv -p python3.6 venv```
+```[nufrix@nufrix-thinkpad-t470p ~/Workspace/hackujstat12_api] ⑂master $ virtualenv -p python2.7 venv```
  
 Napojíme se do něj:
 
-```[nufrix@nufrix-thinkpad-t470p ~/Workspace/hackujstat12_api] ⑂master $ source venv/bin/activate]```
+```[nufrix@nufrix-thinkpad-t470p ~/Workspace/hackujstat12_api] ⑂master $ source venv/bin/activate```
 
 A nainstalujeme si requirements:
 

@@ -52,18 +52,15 @@ def find_candidates():
 
     with app.app_context():
         cursor = get_db().cursor()
-        print(cursor)
         search_query = 'SELECT * FROM candidate WHERE FULLNAME LIKE "%{}%" AND YEAR={}'.format(query, year)
 
         if party:
             search_query = '{} AND {}'.format(search_query, 'OSTRANA="{}"'.format(party.encode('utf-8')))
 
         search_query = '{} ORDER BY POCHLASU {}'.format(search_query, sort)
-        print(search_query)
+
         cursor.execute(search_query)
-        print('query executed')
         result = cursor.fetchall()
-        print(result)
 
         return jsonify(candidates=[{'id': item[-2], 'fullname': item[-3], 'age': item[10]} for item in result], count=len(result))
 
